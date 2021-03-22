@@ -11,12 +11,10 @@ from flytekit.models.core import identifier as _identifier
 def test_flyte_task_fetch(mock_url, mock_client_manager):
     mock_url.get.return_value = "localhost"
     admin_task_v1 = _task_models.Task(
-        _identifier.Identifier(_identifier.ResourceType.TASK, "p1", "d1", "n1", "v1"),
-        _MagicMock(),
+        _identifier.Identifier(_identifier.ResourceType.TASK, "p1", "d1", "n1", "v1"), _MagicMock(),
     )
     admin_task_v2 = _task_models.Task(
-        _identifier.Identifier(_identifier.ResourceType.TASK, "p1", "d1", "n1", "v2"),
-        _MagicMock(),
+        _identifier.Identifier(_identifier.ResourceType.TASK, "p1", "d1", "n1", "v2"), _MagicMock(),
     )
     mock_client = _MagicMock()
     mock_client.list_tasks_paginated = _MagicMock(return_value=([admin_task_v2, admin_task_v1], ""))
