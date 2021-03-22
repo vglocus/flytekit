@@ -1,10 +1,7 @@
-import uuid as _uuid
-
 from flytekit.common import interface as _interfaces
 from flytekit.common.core import identifier as _identifier
 from flytekit.common.exceptions import scopes as _exception_scopes
 from flytekit.common.mixins import hash as _hash_mixin
-from flytekit.configuration import internal as _internal_config
 from flytekit.engines.flyte import engine as _flyte_engine
 from flytekit.models import common as _common_model
 from flytekit.models import task as _task_model
