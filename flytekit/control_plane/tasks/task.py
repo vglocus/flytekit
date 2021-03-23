@@ -10,9 +10,9 @@ from flytekit.models.core import identifier as _identifier_model
 
 
 class FlyteTask(_hash_mixin.HashOnReferenceMixin, _task_model.TaskTemplate):
-    def __init__(self, identifier, type, metadata, interface, custom, container=None, task_type_version=0, config=None):
+    def __init__(self, id, type, metadata, interface, custom, container=None, task_type_version=0, config=None):
         super(FlyteTask, self).__init__(
-            identifier,
+            id,
             type,
             metadata,
             interface,
@@ -37,7 +37,7 @@ class FlyteTask(_hash_mixin.HashOnReferenceMixin, _task_model.TaskTemplate):
     @classmethod
     def promote_from_model(cls, base_model: _task_model.TaskTemplate) -> "FlyteTask":
         t = cls(
-            identifier=base_model.id,
+            id=base_model.id,
             type=base_model.type,
             metadata=base_model.metadata,
             interface=_interfaces.TypedInterface.promote_from_model(base_model.interface),
