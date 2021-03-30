@@ -1,11 +1,11 @@
 from typing import Dict, List, Optional
 
 from flytekit.common import constants as _constants
-from flytekit.common import interface as _interfaces
 from flytekit.common.core import identifier as _identifier
 from flytekit.common.exceptions import scopes as _exception_scopes
 from flytekit.common.mixins import hash as _hash_mixin
 from flytekit.configuration import internal as _internal_config
+from flytekit.control_plane import interface as _interfaces
 from flytekit.control_plane import nodes as _nodes
 from flytekit.engines.flyte import engine as _flyte_engine
 from flytekit.models import task as _task_models
@@ -35,12 +35,12 @@ class FlyteWorkflow(_hash_mixin.HashOnReferenceMixin, _workflow_models.WorkflowT
             nodes=nodes,
             outputs=output_bindings,
         )
-        self._sdk_nodes = nodes
+        self._flyte_nodes = nodes
         self._has_registered = False
 
     @property
     def upstream_entities(self):
-        return set(n.executable_sdk_object for n in self._sdk_nodes)
+        return set(n.executable_sdk_object for n in self._flyte_nodes)
 
     @property
     def interface(self) -> _interfaces.TypedInterface:
@@ -88,8 +88,7 @@ class FlyteWorkflow(_hash_mixin.HashOnReferenceMixin, _workflow_models.WorkflowT
 
     @classmethod
     @_exception_scopes.system_entry_point
-    def fetch(cls, project, domain, name, version=None):
-        version = version or _internal_config.VERSION.get()
+    def fetch(cls, project, domain, name, version):
         workflow_id = _identifier.Identifier(_identifier_model.ResourceType.WORKFLOW, project, domain, name, version)
         admin_workflow = _flyte_engine.get_client().get_workflow(workflow_id)
         cwc = admin_workflow.closure.compiled_workflow
