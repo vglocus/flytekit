@@ -8,7 +8,7 @@ from flytekit.common.exceptions import scopes as _exception_scopes
 from flytekit.common.exceptions import system as _system_exceptions
 from flytekit.common.exceptions import user as _user_exceptions
 from flytekit.common.mixins import hash as _hash_mixin
-from flytekit.common.nodes import ParameterMapper, OutputParameterMapper
+from flytekit.common.nodes import OutputParameterMapper, ParameterMapper
 from flytekit.common.utils import _dnsify
 from flytekit.control_plane import component_nodes as _component_nodes
 from flytekit.control_plane.tasks.task import FlyteTask
