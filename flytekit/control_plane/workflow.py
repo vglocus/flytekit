@@ -1,9 +1,9 @@
 from typing import Dict, List, Optional
 
 from flytekit.common import constants as _constants
-from flytekit.common.core import identifier as _identifier
 from flytekit.common.exceptions import scopes as _exception_scopes
 from flytekit.common.mixins import hash as _hash_mixin
+from flytekit.control_plane import identifier as _identifier
 from flytekit.control_plane import interface as _interfaces
 from flytekit.control_plane import nodes as _nodes
 from flytekit.engines.flyte import engine as _flyte_engine
@@ -87,7 +87,7 @@ class FlyteWorkflow(_hash_mixin.HashOnReferenceMixin, _workflow_models.WorkflowT
 
     @classmethod
     @_exception_scopes.system_entry_point
-    def fetch(cls, project, domain, name, version):
+    def fetch(cls, project: str, domain: str, name: str, version: str):
         workflow_id = _identifier.Identifier(_identifier_model.ResourceType.WORKFLOW, project, domain, name, version)
         admin_workflow = _flyte_engine.get_client().get_workflow(workflow_id)
         cwc = admin_workflow.closure.compiled_workflow

@@ -1,8 +1,8 @@
 import logging as _logging
 from typing import Dict
 
-from flytekit.common.core import identifier as _identifier
 from flytekit.common.exceptions import system as _system_exceptions
+from flytekit.control_plane import identifier as _identifier
 from flytekit.models import task as _task_model
 from flytekit.models.core import workflow as _workflow_model
 

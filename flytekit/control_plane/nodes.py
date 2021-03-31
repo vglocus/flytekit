@@ -1,19 +1,24 @@
 import logging as _logging
 from typing import Dict, List, Optional
 
+from flytekit.clients.helpers import iterate_task_executions as _iterate_task_executions
 from flytekit.common import constants as _constants
 from flytekit.common import promise as _promise
-from flytekit.common.core import identifier as _identifier
 from flytekit.common.exceptions import scopes as _exception_scopes
 from flytekit.common.exceptions import system as _system_exceptions
 from flytekit.common.exceptions import user as _user_exceptions
+from flytekit.common.mixins import artifact as _artifact_mixin
 from flytekit.common.mixins import hash as _hash_mixin
-from flytekit.common.nodes import OutputParameterMapper, ParameterMapper
+from flytekit.common.nodes import OutputParameterMapper
 from flytekit.common.utils import _dnsify
 from flytekit.control_plane import component_nodes as _component_nodes
+from flytekit.control_plane import identifier as _identifier
+from flytekit.control_plane.tasks import executions as _task_executions
 from flytekit.control_plane.tasks.task import FlyteTask
-from flytekit.models import common as _common_models
+from flytekit.engines.flyte import engine as _flyte_engine
+from flytekit.models import node_execution as _node_execution_models
 from flytekit.models import task as _task_model
+from flytekit.models.core import execution as _execution_models
 from flytekit.models.core import workflow as _workflow_model
 
 
@@ -175,3 +180,79 @@ class FlyteNode(_hash_mixin.HashOnReferenceMixin, _workflow_model.Node):
 
     def __repr__(self) -> str:
         return f"Node(ID: {self.id} Executable: {self._executable_flyte_object})"
+
+
+class FlyteNodeExecution(_node_execution_models.NodeExecution, _artifact_mixin.ExecutionArtifact):
+    def __init__(self, *args, **kwargs):
+        super(FlyteNodeExecution, self).__init__(*args, **kwargs)
+        self._task_executions = None
+        self._workflow_executions = None
+        self._inputs = None
+        self._outputs = None
+
+    @property
+    def task_executions(self) -> List["flytekit.control_plane.tasks.executions.FlyteTaskExecution"]:
+        return self._task_executions or []
+
+    @property
+    def workflow_executions(self) -> List["flytekit.control_plane.workflow_executions.FlyteWorkflowExecution"]:
+        return self._workflow_executions or []
+
+    @property
+    def executions(self) -> _artifact_mixin.ExecutionArtifact:
+        return self.task_executions or self.workflow_executions or []
+
+    @property
+    def inputs(self):
+        # TODO
+        pass
+
+    @property
+    def outputs(self):
+        # TODO
+        pass
+
+    @property
+    def error(self) -> _execution_models.ExecutionError:
+        """
+        If execution is in progress, raise an exception. Otherwise, return None if no error was present upon
+        reaching completion.
+        """
+        if not self.is_complete:
+            raise _user_exceptions.FlyteAssertion(
+                "Please wait until the node execution has completed before requesting error information."
+            )
+        return self.closure.error
+
+    @property
+    def is_complete(self) -> bool:
+        """Whether or not the execution is complete."""
+        return self.closure.phase in {
+            _execution_models.NodeExecutionPhase.ABORTED,
+            _execution_models.NodeExecutionPhase.FAILED,
+            _execution_models.NodeExecutionPhase.SKIPPED,
+            _execution_models.NodeExecutionPhase.SUCCEEDED,
+            _execution_models.NodeExecutionPhase.TIMED_OUT,
+        }
+
+    @classmethod
+    def promote_from_model(cls, base_model: _node_execution_models.NodeExecution) -> "FlyteNodeExecution":
+        return cls(closure=base_model.closure, id=base_model.id, input_uri=base_model.input_uri)
+
+    def sync(self):
+        """
+        Syncs the state of the underlying execution artifact with the state observed by the platform.
+        """
+        if not self.is_complete or self.task_executions is not None:
+            client = _flyte_engine.get_client()
+            self._closure = client.get_node_execution(self.id).closure
+            self._task_executions = [
+                _task_executions.FlyteTaskExecution.promote_from_model(t)
+                for t in _iterate_task_executions(client, self.id)
+            ]
+
+    def _sync_closure(self):
+        """
+        Syncs the closure of the underlying execution artifact with the state observed by the platform.
+        """
+        self._closure = _flyte_engine.get_client().get_node_execution(self.id).closure
