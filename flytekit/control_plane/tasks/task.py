@@ -83,7 +83,9 @@ class FlyteTask(_hash_mixin.HashOnReferenceMixin, _task_model.TaskTemplate):
         named_task = _common_model.NamedEntityIdentifier(project, domain, name)
         client = _flyte_engine.get_client()
         task_list, _ = client.list_tasks_paginated(
-            named_task, limit=1, sort_by=_admin_common.Sort("created_at", _admin_common.Sort.Direction.DESCENDING),
+            named_task,
+            limit=1,
+            sort_by=_admin_common.Sort("created_at", _admin_common.Sort.Direction.DESCENDING),
         )
         admin_task = task_list[0] if task_list else None
 

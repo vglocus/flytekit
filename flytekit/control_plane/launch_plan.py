@@ -22,7 +22,8 @@ from flytekit.models import literals as _literal_models
 
 
 class FlyteLaunchPlan(
-    _launchable_mixin.LaunchableEntity, _launch_plan_models.LaunchPlanSpec,
+    _launchable_mixin.LaunchableEntity,
+    _launch_plan_models.LaunchPlanSpec,
 ):
     def __init__(self, *args, **kwargs):
         super(FlyteLaunchPlan, self).__init__(*args, **kwargs)
@@ -125,7 +126,8 @@ class FlyteLaunchPlan(
             )
             assumable_iam_role = _sdk_config.ROLE.get()
         return _common_models.AuthRole(
-            assumable_iam_role=assumable_iam_role, kubernetes_service_account=kubernetes_service_account,
+            assumable_iam_role=assumable_iam_role,
+            kubernetes_service_account=kubernetes_service_account,
         )
 
     @property
@@ -187,7 +189,13 @@ class FlyteLaunchPlan(
         Deprecated.
         """
         return self.launch_with_literals(
-            project, domain, literal_inputs, name, notification_overrides, label_overrides, annotation_overrides,
+            project,
+            domain,
+            literal_inputs,
+            name,
+            notification_overrides,
+            label_overrides,
+            annotation_overrides,
         )
 
     @_exception_scopes.system_entry_point

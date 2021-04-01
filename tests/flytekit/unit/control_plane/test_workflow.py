@@ -11,7 +11,8 @@ from flytekit.models.core import identifier as _identifier
 def test_flyte_workflow_integration(mock_url, mock_client_manager):
     mock_url.get.return_value = "localhost"
     admin_workflow = _workflow_models.Workflow(
-        _identifier.Identifier(_identifier.ResourceType.WORKFLOW, "p1", "d1", "n1", "v1"), _MagicMock(),
+        _identifier.Identifier(_identifier.ResourceType.WORKFLOW, "p1", "d1", "n1", "v1"),
+        _MagicMock(),
     )
     mock_client = _MagicMock()
     mock_client.list_workflows_paginated = _MagicMock(returnValue=([admin_workflow], ""))

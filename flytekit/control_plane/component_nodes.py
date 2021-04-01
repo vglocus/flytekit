@@ -23,7 +23,9 @@ class FlyteTaskNode(_workflow_model.TaskNode):
 
     @classmethod
     def promote_from_model(
-        cls, base_model: _workflow_model.TaskNode, tasks: Dict[_identifier.Identifier, _task_model.TaskTemplate],
+        cls,
+        base_model: _workflow_model.TaskNode,
+        tasks: Dict[_identifier.Identifier, _task_model.TaskTemplate],
     ) -> "FlyteTaskNode":
         """
         Takes the idl wrapper for a TaskNode and returns the hydrated Flytekit object for it by fetching it with the
@@ -118,7 +120,9 @@ class FlyteWorkflowNode(_workflow_model.WorkflowNode):
             if base_model.reference in sub_workflows:
                 return cls(
                     flyte_workflow=_workflow.FlyteWorkflow.promote_from_model(
-                        sub_workflows[base_model.reference], sub_workflows=sub_workflows, tasks=tasks,
+                        sub_workflows[base_model.reference],
+                        sub_workflows=sub_workflows,
+                        tasks=tasks,
                     )
                 )
 

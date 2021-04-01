@@ -6,7 +6,6 @@ from flytekit.models import common as _common_model
 from flytekit.models import execution as _execution_model
 from flytekit.models.core import execution as _core_execution_model
 
-
 Phases = List[_core_execution_model.WorkflowExecutionPhase]
 
 

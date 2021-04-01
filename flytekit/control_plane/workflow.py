@@ -16,7 +16,13 @@ class FlyteWorkflow(_hash_mixin.HashOnReferenceMixin, _workflow_models.WorkflowT
     """A Flyte control plane construct."""
 
     def __init__(
-        self, nodes: List[_nodes.FlyteNode], interface, output_bindings, id, metadata, metadata_defaults,
+        self,
+        nodes: List[_nodes.FlyteNode],
+        interface,
+        output_bindings,
+        id,
+        metadata,
+        metadata_defaults,
     ):
         for node in nodes:
             for upstream in node.upstream_nodes:
