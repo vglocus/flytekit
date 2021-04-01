@@ -1,11 +1,20 @@
+import os as _os
 from typing import Dict, List
 
+from flyteidl.core import literals_pb2 as _literals_pb2
+
 from flytekit.clients.helpers import iterate_node_executions as _iterate_node_executions
+from flytekit.common import utils as _common_utils
 from flytekit.common.mixins import artifact as _artifact
 from flytekit.control_plane import identifier as _core_identifier
 from flytekit.control_plane import nodes as _nodes
+from flytekit.core.context_manager import FlyteContext
+from flytekit.core.type_engine import TypeEngine
+from flytekit.engines.flyte import engine as _flyte_engine
+from flytekit.interfaces.data import data_proxy as _data_proxy
 from flytekit.models import execution as _execution_models
 from flytekit.models import filters as _filter_models
+from flytekit.models import literals as _literal_models
 
 
 class FlyteWorkflowExecution(_execution_models.Execution, _artifact.ExecutionArtifact):
@@ -20,14 +29,60 @@ class FlyteWorkflowExecution(_execution_models.Execution, _artifact.ExecutionArt
         return self._node_executions or {}
 
     @property
-    def inputs(self):
-        # TODO
-        pass
+    def inputs(self) -> Dict[str, Any]:
+        """
+        Returns the inputs to the execution in the standard python format as dictated by the type engine.
+        """
+        if self._inputs is None:
+            client = _flyte_engine.get_client()
+            execution_data = client.get_execution_data(self.id)
+
+            # Inputs are usually returned inline. If they are too big, a url blob pointing to them is returned.
+            input_map: LiteralMap = _literal_models.LiteralMap({})
+            if bool(execution_data.full_inputs.literals):
+                input_map = execution_data.full_inputs
+            elif execution_data.inputs.bytes > 0:
+                with _common_utils.AutoDeletingTempDir() as tmp_dir:
+                    tmp_name = _os.path.join(tmp_dir.name, "inputs.pb")
+                    _data_proxy.Data.get_data(execution_data.inputs.url, tmp_name)
+                    input_map = _literal_models.LiteralMap.from_flyte_idl(
+                        _common_utils.load_proto_from_file(_literals_pb2.Literalmap, tmp_name)
+                    )
+
+            self._inputs = TypeEngine.literal_map_to_kwargs(ctx=FlyteContext.current_context(), lm=input_map)
+        return self._inputs
 
     @property
-    def outputs(self):
-        # TODO
-        pass
+    def outputs(self) -> Dict[str, Any]:
+        """
+        Returns the outputs to the execution in the standard python format as dictated by the type engine. If the
+        execution ended in error or the execution isin progress, an exception will be raised.
+        :raises: ``FlyteAssertion`` error if execution is in progress or execution ended in error.
+        """
+        if not self.is_complete:
+            raise _user_exceptions.FlyteAssertion(
+                "Please wait until the node execution has completed before requesting the outputs."
+            )
+        if self.error:
+            raise _user_exceptions.FlyteAssertion("Outputs could not be found because the execution ended in failure.")
+
+        if self._outputs is None:
+            client = _flyte_engine.get_client()
+            execution_data = client.get_execution_data(self.id)
+            # Inputs are usually returned inline. If they are too big, a url blob pointing to them is returned.
+            output_map: LiteralMap = _literal_models.LiteralMap({})
+            if bool(execution_data.full_outputs.literals):
+                output_map = execution_data.full_outputs
+            elif execution_data.outputs.bytes > 0:
+                with _common_utils.AutoDeletingTempDir() as tmp_dir:
+                    tmp_name = _os.path.join(tmp_dir.name, "outputs.pb")
+                    _data_proxy.Data.get_data(execution_data.outputs.url, tmp_name)
+                    output_map = _literal_models.LiteralMap.from_flyte_idl(
+                        _common_utils.load_proto_from_file(_literals_pb2.LiteralMap, tmp_name)
+                    )
+
+            self._outputs = TypeEngine.literal_map_to_kwargs(ctx=FlyteContext.current_context(), lm=output_map)
+        self._outputs
 
     @property
     def error(self) -> _execution_models.ExecutionError:
