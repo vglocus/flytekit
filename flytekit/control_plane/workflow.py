@@ -41,7 +41,6 @@ class FlyteWorkflow(_hash_mixin.HashOnReferenceMixin, _workflow_models.WorkflowT
             outputs=output_bindings,
         )
         self._flyte_nodes = nodes
-        self._has_registered = False
 
     @property
     def upstream_entities(self):
@@ -106,7 +105,6 @@ class FlyteWorkflow(_hash_mixin.HashOnReferenceMixin, _workflow_models.WorkflowT
             tasks={t.template.id: t.template for t in cwc.tasks},
         )
         flyte_workflow._id = workflow_id
-        flyte_workflow._has_registered = True
         return flyte_workflow
 
     @classmethod

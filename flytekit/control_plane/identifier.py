@@ -1,5 +1,3 @@
-import six as _six
-
 from flytekit.common.exceptions import user as _user_exceptions
 from flytekit.models.core import identifier as _core_identifier
 
@@ -11,22 +9,22 @@ class Identifier(_core_identifier.Identifier):
         "wf": _core_identifier.ResourceType.WORKFLOW,
         "tsk": _core_identifier.ResourceType.TASK,
     }
-    _TYPE_TO_STRING_MAP = {v: k for k, v in _six.iteritems(_STRING_TO_TYPE_MAP)}
+    _TYPE_TO_STRING_MAP = {v: k for k, v in _STRING_TO_TYPE_MAP.items()}
 
     @classmethod
     def promote_from_model(cls, base_model: _core_identifier.Identifier) -> "Identifier":
         return cls(base_model.response_type, base_model.project, base_model.domain, base_model.name, base_model.version)
 
     @classmethod
-    def from_python_std(cls, string: str) -> "Identifier":
+    def from_urn(cls, urn: str) -> "Identifier":
         """
-        Parses a string in the correct format into an identifier
+        Parses a string urn in the correct format into an identifier
         """
-        segments = string.split(":")
+        segments = urn.split(":")
         if len(segments) != 5:
             raise _user_exceptions.FlyteValueException(
                 "The provided string was not in a parseable format. The string for an identifier must be in the format"
-                " entity_type:project:domain:name:version.  Received: {}".format(string)
+                " entity_type:project:domain:name:version.  Received: {}".format(urn)
             )
 
         resource_type, project, domain, name, version = segments

@@ -67,7 +67,6 @@ class FlyteTask(_hash_mixin.HashOnReferenceMixin, _task_model.TaskTemplate):
 
         flyte_task = cls.promote_from_model(admin_task.closure.compiled_task.template)
         flyte_task._id = task_id
-        flyte_task._has_registered = True
         return flyte_task
 
     @classmethod

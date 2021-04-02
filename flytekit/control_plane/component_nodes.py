@@ -40,7 +40,6 @@ class FlyteTaskNode(_workflow_model.TaskNode):
             task = tasks[base_model.reference_id]
             _logging.info(f"Found existing task template for {task.id}, will not retrieve from Admin")
             flyte_task = _task.FlyteTask.promote_from_model(task)
-            flyte_task._has_registered = True
             return cls(flyte_task)
 
         # if not found, fetch it from Admin

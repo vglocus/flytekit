@@ -108,7 +108,7 @@ class FlyteTaskExecution(_task_execution_model.TaskExecution, _artifact_mixin.Ex
             for v in _iterate_node_executions(client, task_execution_identifier=self.id, filters=filters)
         }
 
-        return {k: _nodes.FlyteNodeExecution.promote_from_model(v) for k, v in _six.iteritems(models)}
+        return {k: _nodes.FlyteNodeExecution.promote_from_model(v) for k, v in models.items()}
 
     @classmethod
     def promote_from_model(cls, base_model: _task_execution_model.TaskExecution) -> "FlyteTaskExecution":

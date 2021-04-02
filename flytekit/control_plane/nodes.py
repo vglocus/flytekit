@@ -6,9 +6,7 @@ from flyteidl.core import literals_pb2 as _literals_pb2
 
 from flytekit.clients.helpers import iterate_task_executions as _iterate_task_executions
 from flytekit.common import constants as _constants
-from flytekit.common import promise as _promise
 from flytekit.common import utils as _common_utils
-from flytekit.common.exceptions import scopes as _exception_scopes
 from flytekit.common.exceptions import system as _system_exceptions
 from flytekit.common.exceptions import user as _user_exceptions
 from flytekit.common.mixins import artifact as _artifact_mixin
@@ -19,6 +17,7 @@ from flytekit.control_plane import component_nodes as _component_nodes
 from flytekit.control_plane import identifier as _identifier
 from flytekit.control_plane.tasks import executions as _task_executions
 from flytekit.core.context_manager import FlyteContext
+from flytekit.core.promise import NodeOutput
 from flytekit.core.type_engine import TypeEngine
 from flytekit.engines.flyte import engine as _flyte_engine
 from flytekit.interfaces.data import data_proxy as _data_proxy
@@ -146,7 +145,7 @@ class FlyteNode(_hash_mixin.HashOnReferenceMixin, _workflow_model.Node):
         return list(sorted(n.id for n in self.upstream_nodes))
 
     @property
-    def outputs(self) -> Dict[str, _promise.NodeOutput]:
+    def outputs(self) -> Dict[str, NodeOutput]:
         return self._outputs
 
     def assign_id_and_return(self, id: str):
@@ -162,27 +161,6 @@ class FlyteNode(_hash_mixin.HashOnReferenceMixin, _workflow_model.Node):
     def with_overrides(self, *args, **kwargs):
         # TODO: Implement overrides
         raise NotImplementedError("Overrides are not supported in Flyte yet.")
-
-    @_exception_scopes.system_entry_point
-    def __lshift__(self, other: "FlyteNode") -> "FlyteNode":
-        """
-        Add a node upstream of this node without necessarily mapping outputs -> inputs.
-        :param other: node to place upstream
-        """
-        if hash(other) not in set(hash(n) for n in self.upstream_nodes):
-            self._upstream.append(other)
-        return other
-
-    @_exception_scopes.system_entry_point
-    def __rshift__(self, other: "FlyteNode") -> "FlyteNode":
-        """
-        Add a node downstream of this node without necessarily mapping outputs -> inputs.
-
-        :param other: node to place downstream
-        """
-        if hash(self) not in set(hash(n) for n in other.upstream_nodes):
-            other.upstream_nodes.append(self)
-        return other
 
     def __repr__(self) -> str:
         return f"Node(ID: {self.id} Executable: {self._executable_flyte_object})"

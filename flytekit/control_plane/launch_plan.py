@@ -1,8 +1,6 @@
 import uuid as _uuid
 from typing import Any, List
 
-import six as _six
-
 from flytekit.common.exceptions import scopes as _exception_scopes
 from flytekit.common.exceptions import user as _user_exceptions
 from flytekit.common.mixins import launchable as _launchable_mixin
@@ -10,7 +8,6 @@ from flytekit.configuration import sdk as _sdk_config
 from flytekit.control_plane import identifier as _identifier
 from flytekit.control_plane import interface as _interface
 from flytekit.control_plane import nodes as _nodes
-from flytekit.control_plane import notifications as _notifications
 from flytekit.control_plane import workflow_execution as _workflow_execution
 from flytekit.engines.flyte import engine as _flyte_engine
 from flytekit.models import common as _common_models
@@ -37,12 +34,7 @@ class FlyteLaunchPlan(
     def promote_from_model(cls, model: _launch_plan_models.LaunchPlanSpec) -> "FlyteLaunchPlan":
         return cls(
             workflow_id=_identifier.Identifier.promote_from_model(model.workflow_id),
-            default_inputs=_interface_models.ParameterMap(
-                {
-                    k: _promises.Input.promote_from_model(v).rename_and_return_reference(k)
-                    for k, v in _six.iteritems(model.default_inputs.parameters)
-                }
-            ),
+            default_inputs=_interface_models.ParameterMap(model.default_inputs.parameters),
             fixed_inputs=model.fixed_inputs,
             entity_metadata=model.entity_metadata,
             labels=model.labels,
@@ -80,7 +72,6 @@ class FlyteLaunchPlan(
         wf_id = flyte_lp.workflow_id
         lp_wf = _workflow.FlyteWorkflow.fetch(wf_id.project, wf_id.domain, wf_id.name, wf_id.version)
         flyte_lp._interface = lp_wf.interface
-        flyte_lp._has_registered = True
         return flyte_lp
 
     @_exception_scopes.system_entry_point
@@ -205,7 +196,7 @@ class FlyteLaunchPlan(
         domain: str,
         literal_inputs: _literal_models.LiteralMap,
         name: str = None,
-        notification_overrides: List[_notifications.Notification] = None,
+        notification_overrides: List[_common_models.Notification] = None,
         label_overrides: _common_models.Labels = None,
         annotation_overrides: _common_models.Annotations = None,
     ) -> _workflow_execution.FlyteWorkflowExecution:
@@ -258,30 +249,7 @@ class FlyteLaunchPlan(
 
     @_exception_scopes.system_entry_point
     def __call__(self, *args, **input_map: Any) -> _nodes.FlyteNode:
-        r"""
-        :param args: Do not specify.  Kwargs only are supported for this function.
-        :param input_map: Map of inputs.  Can be statically defined or OutputReference links.
-        """
-        if len(args) > 0:
-            raise _user_exceptions.FlyteAssertion(
-                "When adding a launchplan as a node in a workflow, all inputs must be specified with kwargs only.  We "
-                "detected {} positional args.".format(len(args))
-            )
-
-        # Take the default values from the launch plan
-        default_inputs = {k: v.sdk_default for k, v in _six.iteritems(self.default_inputs.parameters) if not v.required}
-        default_inputs.update(input_map)
-
-        # TODO: implement control_plan.interface.TypedInterface.create_bindings_for_inputs method
-        bindings, upstream_nodes = self.interface.create_bindings_for_inputs(default_inputs)
-
-        return _nodes.FlyteNode(
-            id=None,
-            metadata=_workflow_models.NodeMetadata("", _datetime.timedelta(), _literal_models.RetryStrategy(0)),
-            bindings=sorted(bindings, key=lambda b: b.var),
-            upstream_nodes=upstream_nodes,
-            flyte_launch_plan=self,
-        )
+        raise NotImplementedError()
 
     def __repr__(self) -> str:
         return f"FlyteLaunchPlan(ID: {self.id} Interface: {self.interface} WF ID: {self.workflow_id})"
