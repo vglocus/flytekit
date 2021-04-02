@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from flytekit.common import utils as _common_utils
 from flytekit.common.exceptions import user as _user_exceptions
@@ -80,8 +80,8 @@ class FlyteTaskExecution(_task_execution_model.TaskExecution, _artifact_mixin.Ex
                     output_map = _literal_models.LiteralMap.from_flyte_idl(
                         _common_utils.load_proto_from_file(_literals_pb2.LiteralMap, tmp_name)
                     )
-            else:
                 output_map = _literal_models.LiteralMap({})
+
             self._outputs = TypeEngine.literal_map_to_kwargs(ctx=FlyteContext.current_context(), lm=output_map)
         return self._outputs
 

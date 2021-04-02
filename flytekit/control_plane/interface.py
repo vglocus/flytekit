@@ -16,7 +16,7 @@ class TypedInterface(_interface_models.TypedInterface):
 
     def create_bindings_for_inputs(
         self, map_of_bindings: Dict[str, Any]
-    ) -> Tuple[List[_literal_models.Binding, List[_nodes.FlyteNode]]]:
+    ) -> Tuple[List[_literal_models.Binding], List[_nodes.FlyteNode]]:
         """
         :param: map_of_bindings: this can be scalar primitives, it can be node output references, lists, etc.
         :raises: flytekit.common.exceptions.user.FlyteAssertion

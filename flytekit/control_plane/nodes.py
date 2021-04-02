@@ -18,7 +18,6 @@ from flytekit.common.utils import _dnsify
 from flytekit.control_plane import component_nodes as _component_nodes
 from flytekit.control_plane import identifier as _identifier
 from flytekit.control_plane.tasks import executions as _task_executions
-from flytekit.control_plane.tasks.task import FlyteTask
 from flytekit.core.context_manager import FlyteContext
 from flytekit.core.type_engine import TypeEngine
 from flytekit.engines.flyte import engine as _flyte_engine
@@ -36,7 +35,7 @@ class FlyteNode(_hash_mixin.HashOnReferenceMixin, _workflow_model.Node):
         upstream_nodes,
         bindings,
         metadata,
-        flyte_task: FlyteTask = None,
+        flyte_task: "flytekit.control_plan.tasks.task.FlyteTask" = None,
         flyte_workflow: "flytekit.control_plane.workflow.FlyteWorkflow" = None,
         flyte_launch_plan=None,
         flyte_branch=None,
