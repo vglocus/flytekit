@@ -37,7 +37,7 @@ class FlyteWorkflowExecution(_execution_models.Execution, _artifact.ExecutionArt
             client = _flyte_engine.get_client()
             execution_data = client.get_execution_data(self.id)
 
-            # Inputs are usually returned inline. If they are too big, a url blob pointing to them is returned.
+            # Inputs are returned inline unless they are too big, in which case a url blob pointing to them is returned.
             input_map: LiteralMap = _literal_models.LiteralMap({})
             if bool(execution_data.full_inputs.literals):
                 input_map = execution_data.full_inputs
@@ -55,8 +55,8 @@ class FlyteWorkflowExecution(_execution_models.Execution, _artifact.ExecutionArt
     @property
     def outputs(self) -> Dict[str, Any]:
         """
-        Returns the outputs to the execution in the standard python format as dictated by the type engine. If the
-        execution ended in error or the execution isin progress, an exception will be raised.
+        Returns the outputs to the execution in the standard python format as dictated by the type engine.
+
         :raises: ``FlyteAssertion`` error if execution is in progress or execution ended in error.
         """
         if not self.is_complete:
@@ -69,7 +69,7 @@ class FlyteWorkflowExecution(_execution_models.Execution, _artifact.ExecutionArt
         if self._outputs is None:
             client = _flyte_engine.get_client()
             execution_data = client.get_execution_data(self.id)
-            # Inputs are usually returned inline. If they are too big, a url blob pointing to them is returned.
+            # Outputs are returned inline unless they are too big, in which case a url blob pointing to them is returned.
             output_map: LiteralMap = _literal_models.LiteralMap({})
             if bool(execution_data.full_outputs.literals):
                 output_map = execution_data.full_outputs

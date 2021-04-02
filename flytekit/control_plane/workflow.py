@@ -45,7 +45,7 @@ class FlyteWorkflow(_hash_mixin.HashOnReferenceMixin, _workflow_models.WorkflowT
 
     @property
     def upstream_entities(self):
-        return set(n.executable_sdk_object for n in self._flyte_nodes)
+        return set(n.executable_flyte_object for n in self._flyte_nodes)
 
     @property
     def interface(self) -> _interfaces.TypedInterface:
@@ -63,19 +63,22 @@ class FlyteWorkflow(_hash_mixin.HashOnReferenceMixin, _workflow_models.WorkflowT
         result = []
         for node in self.nodes:
             if node.workflow_node is not None and node.workflow_node.sub_workflow_ref is not None:
-                if node.executable_sdk_object is not None and node.executable_sdk_object.entity_type_text == "Workflow":
-                    result.append(node.executable_sdk_object)
-                    result.extend(node.executable_sdk_object.get_sub_workflows())
+                if (
+                    node.executable_flyte_object is not None
+                    and node.executable_flyte_object.entity_type_text == "Workflow"
+                ):
+                    result.append(node.executable_flyte_object)
+                    result.extend(node.executable_flyte_object.get_sub_workflows())
                 else:
                     raise _system_exceptions.FlyteSystemException(
                         "workflow node with subworkflow found but bad executable "
-                        "object {}".format(node.executable_sdk_object)
+                        "object {}".format(node.executable_flyte_object)
                     )
 
             # get subworkflows in conditional branches
             if node.branch_node is not None:
                 if_else: _workflow_models.IfElseBlock = node.branch_node.if_else
-                leaf_nodes: List[_nodes.SdkNode] = filter(
+                leaf_nodes: List[_nodes.FlyteNode] = filter(
                     None,
                     [
                         if_else.case.then_node,
@@ -84,10 +87,10 @@ class FlyteWorkflow(_hash_mixin.HashOnReferenceMixin, _workflow_models.WorkflowT
                     ],
                 )
                 for leaf_node in leaf_nodes:
-                    exec_sdk_obj = leaf_node.executable_sdk_object
-                    if exec_sdk_obj is not None and exec_sdk_obj.entity_type_text == "Workflow":
-                        result.append(exec_sdk_obj)
-                        result.extend(exec_sdk_obj.get_sub_workflows())
+                    exec_flyte_obj = leaf_node.executable_flyte_object
+                    if exec_flyte_obj is not None and exec_flyte_obj.entity_type_text == "Workflow":
+                        result.append(exec_flyte_obj)
+                        result.extend(exec_flyte_obj.get_sub_workflows())
 
         return result
 
@@ -140,3 +143,44 @@ class FlyteWorkflow(_hash_mixin.HashOnReferenceMixin, _workflow_models.WorkflowT
             interface=_interfaces.TypedInterface.promote_from_model(base_model.interface),
             output_bindings=base_model.outputs,
         )
+
+    @_exception_scopes.system_entry_point
+    def register(self, project, domain, name, version):
+        # TODO
+        pass
+
+    @_exception_scopes.system_entry_point
+    def serialize(self):
+        # TODO
+        pass
+
+    @_exception_scopes.system_entry_point
+    def validate(self):
+        # TODO
+        pass
+
+    @_exception_scopes.system_entry_point
+    def create_launch_plan(self, *args, **kwargs):
+        # TODO
+        pass
+
+    @_exception_scopes.system_entry_point
+    def __call__(self, *arks, **input_map):
+        if len(args) > 0:
+            raise _user_exceptions.FlyteAssertion(
+                "When adding a workflow as a node in a workflow, all inputs must be specified with kwargs only.  We "
+                "detected {} positional args.".format(len(args))
+            )
+        # TODO: need to implement creation of new bindings with new type engine
+        bindings, upstream_nodes = self.interface.create_bindings_for_inputs(input_map)
+
+        node = _nodes.FlyteNode(
+            id=None,
+            metadata=_workflow_models.NodeMetadata(
+                "placeholder", _datetime.timedelta(), _literal_models.RetryStrategy(0)
+            ),
+            upstream_nodes=upstream_nodes,
+            bindings=sorted(bindings, key=lambda b: b.var),
+            sdk_workflow=self,
+        )
+        return node

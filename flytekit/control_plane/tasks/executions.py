@@ -1,7 +1,10 @@
 from typing import Optional
 
+from flytekit.common import utils as _common_utils
 from flytekit.common.exceptions import user as _user_exceptions
 from flytekit.common.mixins import artifact as _artifact_mixin
+from flytekit.core.context_manager import FlyteContext
+from flytekit.core.type_engine import TypeEngine
 from flytekit.engines.flyte import engine as _flyte_engine
 from flytekit.models.admin import task_execution as _task_execution_model
 from flytekit.models.core import execution as _execution_models
@@ -23,14 +26,64 @@ class FlyteTaskExecution(_task_execution_model.TaskExecution, _artifact_mixin.Ex
         }
 
     @property
-    def inputs(self):
-        # TODO
-        pass
+    def inputs(self) -> Dict[str, Any]:
+        """
+        Returns the inputs of the task execution in the standard Python format that is produced by
+        the type engine.
+        """
+        if self._inputs is None:
+            client = _flyte_engine.get_client()
+            execution_data = client.get_task_execution_data(self.id)
+
+            # Inputs are returned inline unless they are too big, in which case a url blob pointing to them is returned.
+            input_map: _literal_models.LiteralMap = _literal_models.LiteralMap({})
+            if bool(execution_data.full_inputs.literals):
+                input_map = execution_data.full_inputs
+            elif execution_data.inputs.bytes > 0:
+                with _common_utils.AutoDeletingTempDir() as tmp_dir:
+                    tmp_name = _os.path.join(tmp_dir.name, "inputs.pb")
+                    _data_proxy.Data.get_data(execution_data.inputs.url, tmp_name)
+                    input_map = _literal_models.LiteralMap.from_flyte_idl(
+                        _common_utils.load_proto_from_file(_literals_pb2.LiteralMap, tmp_name)
+                    )
+
+            self._inputs = TypeEngine.literal_map_to_kwargs(ctx=FlyteContext.current_context(), lm=input_map)
+        return self._inputs
 
     @property
-    def outputs(self):
-        # TODO
-        pass
+    def outputs(self) -> Dict[str, Any]:
+        """
+        Returns the outputs of the task execution, if available, in the standard Python format that is produced by
+        the type engine.
+
+        :raises: ``FlyteAssertion`` error if execution is in progress or execution ended in error.
+        """
+        if not self.is_complete:
+            raise _user_exceptions.FlyteAssertion(
+                "Please what until the task execution has completed before requesting the outputs."
+            )
+        if self.error:
+            raise _user_exceptions.FlyteAssertion("Outputs could not be found because the execution ended in failure.")
+
+        if self._outputs is None:
+            client = _flyte_engine.get_client()
+            execution_data = client.get_task_execution_data(self.id)
+
+            # Inputs are returned inline unless they are too big, in which case a url blob pointing to them is returned.
+            if bool(execution_data.full_outputs.literals):
+                output_map = execution_data.full_outputs
+
+            elif execution_data.outputs.bytes > 0:
+                with _common_utils.AutoDeletingTempDir() as t:
+                    tmp_name = _os.path.join(t.name, "outputs.pb")
+                    _data_proxy.Data.get_data(execution_data.outputs.url, tmp_name)
+                    output_map = _literal_models.LiteralMap.from_flyte_idl(
+                        _common_utils.load_proto_from_file(_literals_pb2.LiteralMap, tmp_name)
+                    )
+            else:
+                output_map = _literal_models.LiteralMap({})
+            self._outputs = TypeEngine.literal_map_to_kwargs(ctx=FlyteContext.current_context(), lm=output_map)
+        return self._outputs
 
     @property
     def error(self) -> Optional[_execution_models.ExecutionError]:
