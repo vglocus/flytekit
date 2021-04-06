@@ -13,7 +13,7 @@ class Identifier(_core_identifier.Identifier):
 
     @classmethod
     def promote_from_model(cls, base_model: _core_identifier.Identifier) -> "Identifier":
-        return cls(base_model.response_type, base_model.project, base_model.domain, base_model.name, base_model.version)
+        return cls(base_model.resource_type, base_model.project, base_model.domain, base_model.name, base_model.version)
 
     @classmethod
     def from_urn(cls, urn: str) -> "Identifier":

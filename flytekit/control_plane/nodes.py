@@ -21,6 +21,7 @@ from flytekit.core.promise import NodeOutput
 from flytekit.core.type_engine import TypeEngine
 from flytekit.engines.flyte import engine as _flyte_engine
 from flytekit.interfaces.data import data_proxy as _data_proxy
+from flytekit.models import literals as _literal_models
 from flytekit.models import node_execution as _node_execution_models
 from flytekit.models import task as _task_model
 from flytekit.models.core import execution as _execution_models
@@ -207,7 +208,9 @@ class FlyteNodeExecution(_node_execution_models.NodeExecution, _artifact_mixin.E
                         _common_utils.load_proto_from_file(_literals_pb2.LiteralMap, tmp_name)
                     )
 
-            self._inputs = TypeEngine.literal_map_to_kwargs(ctx=FlyteContext.current_context(), lm=input_map)
+            # TODO: need to convert flyte literals to python types. For now just use literals
+            # self._inputs = TypeEngine.literal_map_to_kwargs(ctx=FlyteContext.current_context(), lm=input_map)
+            self._inputs = input_map
         return self._inputs
 
     @property
@@ -239,7 +242,9 @@ class FlyteNodeExecution(_node_execution_models.NodeExecution, _artifact_mixin.E
                     output_map = _literal_models.LiteralMap.from_flyte_idl(
                         _common_utils.load_proto_from_file(_literals_pb2.LiteralMap, tmp_name)
                     )
-            self._outputs = TypeEngine.literal_map_to_kwargs(ctx=FlyteContext.current_context(), lm=output_map)
+            # TODO: need to convert flyte literals to python types. For now just use literals
+            # self._outputs = TypeEngine.literal_map_to_kwargs(ctx=FlyteContext.current_context(), lm=output_map)
+            self._outputs = output_map
         return self._outputs
 
     @property

@@ -1,10 +1,11 @@
 import os as _os
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from flyteidl.core import literals_pb2 as _literals_pb2
 
 from flytekit.clients.helpers import iterate_node_executions as _iterate_node_executions
 from flytekit.common import utils as _common_utils
+from flytekit.common.exceptions import user as _user_exceptions
 from flytekit.common.mixins import artifact as _artifact
 from flytekit.control_plane import identifier as _core_identifier
 from flytekit.control_plane import nodes as _nodes
@@ -15,6 +16,7 @@ from flytekit.interfaces.data import data_proxy as _data_proxy
 from flytekit.models import execution as _execution_models
 from flytekit.models import filters as _filter_models
 from flytekit.models import literals as _literal_models
+from flytekit.models.core import execution as _core_execution_models
 
 
 class FlyteWorkflowExecution(_execution_models.Execution, _artifact.ExecutionArtifact):
@@ -48,8 +50,9 @@ class FlyteWorkflowExecution(_execution_models.Execution, _artifact.ExecutionArt
                     input_map = _literal_models.LiteralMap.from_flyte_idl(
                         _common_utils.load_proto_from_file(_literals_pb2.Literalmap, tmp_name)
                     )
-
-            self._inputs = TypeEngine.literal_map_to_kwargs(ctx=FlyteContext.current_context(), lm=input_map)
+            # TODO: need to convert flyte literals to python types. For now just use literals
+            # self._inputs = TypeEngine.literal_map_to_kwargs(ctx=FlyteContext.current_context(), lm=input_map)
+            self._inputs = input_map
         return self._inputs
 
     @property
@@ -80,12 +83,13 @@ class FlyteWorkflowExecution(_execution_models.Execution, _artifact.ExecutionArt
                     output_map = _literal_models.LiteralMap.from_flyte_idl(
                         _common_utils.load_proto_from_file(_literals_pb2.LiteralMap, tmp_name)
                     )
-
-            self._outputs = TypeEngine.literal_map_to_kwargs(ctx=FlyteContext.current_context(), lm=output_map)
-        self._outputs
+            # TODO: need to convert flyte literals to python types. For now just use literals
+            # self._outputs = TypeEngine.literal_map_to_kwargs(ctx=FlyteContext.current_context(), lm=output_map)
+            self._outputs = output_map
+        return self._outputs
 
     @property
-    def error(self) -> _execution_models.ExecutionError:
+    def error(self) -> _core_execution_models.ExecutionError:
         """
         If execution is in progress, raise an exception.  Otherwise, return None if no error was present upon
         reaching completion.

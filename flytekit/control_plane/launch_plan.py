@@ -3,7 +3,6 @@ from typing import Any, List
 
 from flytekit.common.exceptions import scopes as _exception_scopes
 from flytekit.common.exceptions import user as _user_exceptions
-from flytekit.common.mixins import launchable as _launchable_mixin
 from flytekit.configuration import sdk as _sdk_config
 from flytekit.control_plane import identifier as _identifier
 from flytekit.control_plane import interface as _interface
@@ -12,16 +11,13 @@ from flytekit.control_plane import workflow_execution as _workflow_execution
 from flytekit.engines.flyte import engine as _flyte_engine
 from flytekit.models import common as _common_models
 from flytekit.models import execution as _execution_models
-from flytekit.models import identifier as _identifier_model
 from flytekit.models import interface as _interface_models
 from flytekit.models import launch_plan as _launch_plan_models
 from flytekit.models import literals as _literal_models
+from flytekit.models.core import identifier as _identifier_model
 
 
-class FlyteLaunchPlan(
-    _launchable_mixin.LaunchableEntity,
-    _launch_plan_models.LaunchPlanSpec,
-):
+class FlyteLaunchPlan(_launch_plan_models.LaunchPlanSpec):
     def __init__(self, *args, **kwargs):
         super(FlyteLaunchPlan, self).__init__(*args, **kwargs)
         # Set all the attributes we expect this class to have
@@ -165,30 +161,6 @@ class FlyteLaunchPlan(
             )
         return _flyte_engine.get_client().update_launch_plan(self.id, state)
 
-    @_deprecated(reason="Use launch_with_literals instead", version="0.9.0")
-    def execute_with_literals(
-        self,
-        project,
-        domain,
-        literal_inputs,
-        name=None,
-        notification_overrides=None,
-        label_overrides=None,
-        annotation_overrides=None,
-    ):
-        """
-        Deprecated.
-        """
-        return self.launch_with_literals(
-            project,
-            domain,
-            literal_inputs,
-            name,
-            notification_overrides,
-            label_overrides,
-            annotation_overrides,
-        )
-
     @_exception_scopes.system_entry_point
     def launch_with_literals(
         self,
@@ -220,7 +192,7 @@ class FlyteLaunchPlan(
         if disable_all:
             notification_overrides = None
         else:
-            notification_overrides = _uuid.NotificationList(notification_overrides or [])
+            notification_overrides = _execution_models.NotificationList(notification_overrides or [])
             disable_all = None
 
         client = _flyte_engine.get_client()
