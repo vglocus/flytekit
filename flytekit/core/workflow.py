@@ -391,6 +391,9 @@ class ImperativeWorkflow(WorkflowBase):
     def __repr__(self):
         return super().__repr__() + f"Nodes ({len(self.compilation_state.nodes)}): {self.compilation_state.nodes}"
 
+    def my_function(self):
+        pass
+
     def execute(self, **kwargs):
         """
         Called by _local_execute. This function is how local execution for imperative workflows runs. Because when an
