@@ -502,6 +502,9 @@ class ImperativeWorkflow(WorkflowBase):
                     self._unbound_inputs.remove(input_value)
             return n
 
+    def add_condition(self, expr: bool, true_case: Union[Promise, Tuple[Promise]], false_case: Optional[Union[Promise, Tuple[Promise]]] = None) -> Node:
+        pass
+
     def add_workflow_input(self, input_name: str, python_type: Type) -> Interface:
         """
         Adds an input to the workflow.
